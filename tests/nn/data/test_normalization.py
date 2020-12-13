@@ -100,32 +100,51 @@ def test_normalizer(min_labels):
     normalizer = normalization.Normalizer(ensure_grayscale=True)
     ds = normalizer.transform_dataset(ds_img)
     example = next(iter(ds))
-    # print(f"shapes: {example['shape0']}, {example['shape1']}, {example['shape2']}")
-    # print(f"shapes: {example.get('shape0', '()')}, {example.get('shape1', '()')}, {example.get('shape2', '()')}")
     assert example["image"].shape[-1] == 1
 
     normalizer = normalization.Normalizer(ensure_float=True, ensure_grayscale=True)
     ds = normalizer.transform_dataset(ds_img)
     example = next(iter(ds))
-    # print(f"shapes: {example['shape0']}, {example['shape1']}, {example['shape2']}")
-    # print(f"shapes: {example.get('shape0', '()')}, {example.get('shape1', '()')}, {example.get('shape2', '()')}")
     assert example["image"].dtype == tf.float32
     assert example["image"].shape[-1] == 1
 
     normalizer = normalization.Normalizer(ensure_float=True, ensure_rgb=True)
     ds = normalizer.transform_dataset(ds_img)
     example = next(iter(ds))
-    # print(f"shapes: {example['shape0']}, {example['shape1']}, {example['shape2']}")
-    # print(f"shapes: {example.get('shape0', '()')}, {example.get('shape1', '()')}, {example.get('shape2', '()')}")
     assert example["image"].dtype == tf.float32
     assert example["image"].shape[-1] == 3
 
-    normalizer = normalization.Normalizer(ensure_grayscale=True, ensure_rgb=True)
-    ds = normalizer.transform_dataset(ds_img)
+    ds = tf.data.Dataset.from_tensor_slices(tf.ones([8, 8, 3], dtype=tf.uint8))
+    ds = ds.map(lambda x: dict(image=x))
+    normalizer = normalization.Normalizer(ensure_float=False, ensure_grayscale=True)
+    ds = normalizer.transform_dataset(ds)
     example = next(iter(ds))
-    # print(f"shapes: {example['shape0']}, {example['shape1']}, {example['shape2']}")
-    # print(f"shapes: {example.get('shape0', '()')}, {example.get('shape1', '()')}, {example.get('shape2', '()')}")
     assert example["image"].shape[-1] == 1
+    assert example["image"].dtype == tf.uint8
+
+    ds = tf.data.Dataset.from_tensor_slices(tf.ones([8, 8, 1], dtype=tf.uint8))
+    ds = ds.map(lambda x: dict(image=x))
+    normalizer = normalization.Normalizer(ensure_float=False, ensure_rgb=True)
+    ds = normalizer.transform_dataset(ds)
+    example = next(iter(ds))
+    assert example["image"].shape[-1] == 3
+    assert example["image"].dtype == tf.uint8
+
+    ds = tf.data.Dataset.from_tensor_slices(tf.ones([8, 8, 3], dtype=tf.uint8))
+    ds = ds.map(lambda x: dict(image=x))
+    normalizer = normalization.Normalizer(ensure_float=True, ensure_grayscale=True)
+    ds = normalizer.transform_dataset(ds)
+    example = next(iter(ds))
+    assert example["image"].shape[-1] == 1
+    assert example["image"].dtype == tf.float32
+
+    ds = tf.data.Dataset.from_tensor_slices(tf.ones([8, 8, 1], dtype=tf.uint8))
+    ds = ds.map(lambda x: dict(image=x))
+    normalizer = normalization.Normalizer(ensure_float=True, ensure_rgb=True)
+    ds = normalizer.transform_dataset(ds)
+    example = next(iter(ds))
+    assert example["image"].shape[-1] == 3
+    assert example["image"].dtype == tf.float32
 
 
 def test_normalizer_from_config():

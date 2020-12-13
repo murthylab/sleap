@@ -385,6 +385,96 @@ def test_inference_layer():
     assert tuple(out.shape) == (1, 4, 4, 1)
 
 
+def test_inference_layer_preprocessing():
+    # Grayscale -> RGB
+    ds = tf.data.Dataset.from_tensor_slices(tf.ones([2, 8, 8, 1], dtype=tf.uint8))
+    example = next(iter(ds))
+    assert example.shape[-1] == 1
+
+    x_in = tf.keras.Input((8, 8, 3))
+    x = tf.keras.layers.Lambda(lambda x: x)(x_in)
+    model = tf.keras.Model(x_in, x)
+
+    l = InferenceLayer(keras_model=model, ensure_grayscale=False)
+
+    x_in2 = tf.keras.layers.Input((8, 8, 1))
+    x2 = l(x_in2)
+    model2 = tf.keras.Model(x_in2, x2)
+
+    out = model2(example)
+    assert out.shape[-1] == 3
+
+    # This breaks without autograph/dynamic shape cond in ensure_rgb
+    out = model2.predict(example)
+    assert out.shape[-1] == 3
+
+
+    # RGB -> Grayscale
+    ds = tf.data.Dataset.from_tensor_slices(tf.ones([2, 8, 8, 3], dtype=tf.uint8))
+    example = next(iter(ds))
+    assert example.shape[-1] == 3
+
+    x_in = tf.keras.Input((8, 8, 1))
+    x = tf.keras.layers.Lambda(lambda x: x)(x_in)
+    model = tf.keras.Model(x_in, x)
+
+    l = InferenceLayer(keras_model=model, ensure_grayscale=True)
+
+    x_in2 = tf.keras.layers.Input((8, 8, 3))
+    x2 = l(x_in2)
+    model2 = tf.keras.Model(x_in2, x2)
+
+    out = model2(example)
+    assert out.shape[-1] == 1
+
+    out = model2.predict(example)
+    assert out.shape[-1] == 1
+
+
+    # Grayscale -> Grayscale
+    ds = tf.data.Dataset.from_tensor_slices(tf.ones([2, 8, 8, 1], dtype=tf.uint8))
+    example = next(iter(ds))
+    assert example.shape[-1] == 1
+
+    x_in = tf.keras.Input((8, 8, 1))
+    x = tf.keras.layers.Lambda(lambda x: x)(x_in)
+    model = tf.keras.Model(x_in, x)
+
+    l = InferenceLayer(keras_model=model, ensure_grayscale=True)
+
+    x_in2 = tf.keras.layers.Input((8, 8, 1))
+    x2 = l(x_in2)
+    model2 = tf.keras.Model(x_in2, x2)
+
+    out = model2(example)
+    assert out.shape[-1] == 1
+
+    out = model2.predict(example)
+    assert out.shape[-1] == 1
+
+
+    # RGB -> RGB
+    ds = tf.data.Dataset.from_tensor_slices(tf.ones([2, 8, 8, 3], dtype=tf.uint8))
+    example = next(iter(ds))
+    assert example.shape[-1] == 3
+
+    x_in = tf.keras.Input((8, 8, 3))
+    x = tf.keras.layers.Lambda(lambda x: x)(x_in)
+    model = tf.keras.Model(x_in, x)
+
+    l = InferenceLayer(keras_model=model, ensure_grayscale=False)
+
+    x_in2 = tf.keras.layers.Input((8, 8, 3))
+    x2 = l(x_in2)
+    model2 = tf.keras.Model(x_in2, x2)
+
+    out = model2(example)
+    assert out.shape[-1] == 3
+
+    out = model2.predict(example)
+    assert out.shape[-1] == 3
+
+
 def test_get_model_output_stride():
     # Single input/output
     x_in = tf.keras.layers.Input([4, 4, 1])

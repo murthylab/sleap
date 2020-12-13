@@ -535,8 +535,10 @@ class InferenceLayer(tf.keras.layers.Layer):
         """
         if self.ensure_grayscale:
             imgs = sleap.nn.data.normalization.ensure_grayscale(imgs)
+            # imgs = sleap.nn.data.normalization.tf_ensure_grayscale(imgs)
         else:
             imgs = sleap.nn.data.normalization.ensure_rgb(imgs)
+            # imgs = sleap.nn.data.normalization.tf_ensure_rgb(imgs)
 
         imgs = sleap.nn.data.normalization.ensure_float(imgs)
 
