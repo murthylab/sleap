@@ -31,6 +31,7 @@ def ensure_min_image_rank(image: tf.Tensor) -> tf.Tensor:
         return image
 
 
+@tf.function
 def ensure_float(image: tf.Tensor) -> tf.Tensor:
     """Convert the image to a tf.float32.
 
@@ -77,42 +78,6 @@ def ensure_int(image: tf.Tensor) -> tf.Tensor:
 
     return image
 
-
-def ensure_grayscale(image: tf.Tensor) -> tf.Tensor:
-    """Convert image to grayscale if in RGB format.
-
-    Args:
-        image: Tensor of any dtype of shape (height, width, channels). Channels are
-            expected to be 1 or 3.
-
-    Returns:
-        A grayscale image of shape (height, width, 1) of the same dtype as the input.
-
-    See also: tf.image.rgb_to_grayscale
-    """
-    if image.shape[-1] == 3:
-        return tf.image.rgb_to_grayscale(image)
-    else:
-        return image
-
-
-@tf.function
-def ensure_rgb(image: tf.Tensor) -> tf.Tensor:
-    """Convert image to RGB if in grayscale format.
-
-    Args:
-        image: Tensor of any dtype of shape (height, width, channels). Channels are
-            expected to be 1 or 3.
-
-    Returns:
-        A grayscale image of shape (height, width, 1) of the same dtype as the input.
-
-    See also: tf.image.grayscale_to_rgb
-    """
-    if tf.shape(image)[-1] == 1:
-        return tf.image.grayscale_to_rgb(image)
-    else:
-        return image
 
 
 def convert_rgb_to_bgr(image: tf.Tensor) -> tf.Tensor:
@@ -266,6 +231,55 @@ def scale_to_imagenet_torch_mode(image: tf.Tensor) -> tf.Tensor:
     return image
 
 
+
+@tf.function
+# @tf.function(experimental_relax_shapes=True)
+def ensure_grayscale(image: tf.Tensor) -> tf.Tensor:
+    """Convert image to grayscale if in RGB format.
+
+    Args:
+        image: Tensor of any dtype of shape (height, width, channels). Channels are
+            expected to be 1 or 3.
+
+    Returns:
+        A grayscale image of shape (height, width, 1) of the same dtype as the input.
+
+    See also: tf.image.rgb_to_grayscale
+    """
+    if image.shape[-1] == 3:
+    # if tf.shape(image)[-1] == 3:
+    # if tf.shape(image)[2] == 3:
+    # if tf.gather(tf.shape(image), 2) == 3:
+        # return tf.image.rgb_to_grayscale(image)
+        image = tf.image.rgb_to_grayscale(image)
+    # else:
+        # return image
+    return image
+
+
+@tf.function
+def ensure_rgb(image: tf.Tensor) -> tf.Tensor:
+    """Convert image to RGB if in grayscale format.
+
+    Args:
+        image: Tensor of any dtype of shape (height, width, channels). Channels are
+            expected to be 1 or 3.
+
+    Returns:
+        A grayscale image of shape (height, width, 1) of the same dtype as the input.
+
+    See also: tf.image.grayscale_to_rgb
+    """
+    # if tf.shape(image)[-1] == 1:
+    if image.shape[-1] == 1:
+        return tf.image.grayscale_to_rgb(image)
+        # return tf.concat([image, image, image], axis=-1)
+    else:
+        return image
+
+
+from functools import reduce
+
 @attr.s(auto_attribs=True)
 class Normalizer:
     """Data transformer to normalize images.
@@ -340,44 +354,89 @@ class Normalizer:
             A `tf.data.Dataset` with elements containing the same images with
             normalization applied.
         """
-        test_ex = next(iter(ds_input))
-        img_shape = test_ex[self.image_key].shape
-        output_shape = img_shape[-3:]
-        if self.ensure_rgb or self.imagenet_mode is not None:
-            output_shape = img_shape[-3:-1] + (3,)
+        # test_ex = next(iter(ds_input))
+        # img_shape = test_ex[self.image_key].shape
+        # output_shape = img_shape[-3:]
+        # if self.ensure_rgb or self.imagenet_mode is not None:
+        #     output_shape = img_shape[-3:-1] + (3,)
+        # if self.ensure_grayscale:
+        #     output_shape = img_shape[-3:-1] + (1,)
+        # if len(img_shape) == 4:
+        #     output_shape = (None,) + output_shape
+
+        # _ensure_float = tf.constant(self.ensure_float)
+        # _ensure_rgb = tf.constant(self.ensure_rgb)
+        # _ensure_grayscale = tf.constant(self.ensure_grayscale)
+
+        # normalize_funcs = [lambda x: x]
+        # normalize_funcs = []
+        ds = ds_input
+        if self.ensure_float:
+            def _ensure_float(ex):
+                ex[self.image_key] = ensure_float(ex[self.image_key])
+                return ex
+            # normalize_funcs.append(_ensure_float)
+            ds = ds.map(_ensure_float, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+
+        if self.ensure_rgb:
+            def _ensure_rgb(ex):
+                ex[self.image_key] = ensure_rgb(ex[self.image_key])
+                return ex
+            # normalize_funcs.append(_ensure_rgb)
+            ds = ds.map(_ensure_rgb, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+
         if self.ensure_grayscale:
-            output_shape = img_shape[-3:-1] + (1,)
-        if len(img_shape) == 4:
-            output_shape = (None,) + output_shape
+            def _ensure_grayscale(ex):
+                ex[self.image_key] = ensure_grayscale(ex[self.image_key])
+                return ex
+            # normalize_funcs.append(_ensure_grayscale)
+            ds = ds.map(_ensure_grayscale, num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
-        def normalize(example):
-            """Local processing function for dataset mapping."""
-            if self.ensure_float:
-                example[self.image_key] = ensure_float(example[self.image_key])
-            if self.ensure_rgb:
-                example[self.image_key] = ensure_rgb(example[self.image_key])
-            if self.ensure_grayscale:
-                example[self.image_key] = ensure_grayscale(example[self.image_key])
-            if self.imagenet_mode == "tf":
-                example[self.image_key] = scale_to_imagenet_tf_mode(
-                    example[self.image_key]
-                )
-            if self.imagenet_mode == "caffe":
-                example[self.image_key] = scale_to_imagenet_caffe_mode(
-                    example[self.image_key]
-                )
-            if self.imagenet_mode == "torch":
-                example[self.image_key] = scale_to_imagenet_torch_mode(
-                    example[self.image_key]
-                )
-            example[self.image_key] = tf.ensure_shape(
-                example[self.image_key], output_shape
-            )
+        ds_output = ds
+        # def normalize(ex):
+        #     for fn in normalize_funcs:
+        #         ex = fn(ex)
+        #     return ex
 
-            return example
+        # def normalize(example):
+        #     """Local processing function for dataset mapping."""
+        #     img = example[self.image_key]
+
+        #     # if self.ensure_float:
+        #     if _ensure_float:
+        #         img = ensure_float(img)
+        #         # example["shape0"] = tf.shape(img)
+
+        #     # if self.ensure_rgb:
+        #     if _ensure_rgb:
+        #         img = ensure_rgb(img)
+        #         # example["shape1"] = tf.shape(img)
+
+        #     # elif self.ensure_grayscale:
+        #     elif _ensure_grayscale:
+        #         img = ensure_grayscale(img)
+        #         # example["shape2"] = tf.shape(img)
+        #     # if self.imagenet_mode == "tf":
+        #     #     example[self.image_key] = scale_to_imagenet_tf_mode(
+        #     #         example[self.image_key]
+        #     #     )
+        #     # if self.imagenet_mode == "caffe":
+        #     #     example[self.image_key] = scale_to_imagenet_caffe_mode(
+        #     #         example[self.image_key]
+        #     #     )
+        #     # if self.imagenet_mode == "torch":
+        #     #     example[self.image_key] = scale_to_imagenet_torch_mode(
+        #     #         example[self.image_key]
+        #     #     )
+        #     # example[self.image_key] = tf.ensure_shape(
+        #     #     example[self.image_key], output_shape
+        #     # )
+
+        #     example[self.image_key] = img
+        #     return example
 
         # Map transformation.
-        ds_output = ds_input.map(
-            normalize, num_parallel_calls=tf.data.experimental.AUTOTUNE
-        )
+        # ds_output = ds_input.map(
+        #     normalize, num_parallel_calls=tf.data.experimental.AUTOTUNE
+        # )
         return ds_output

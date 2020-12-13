@@ -100,23 +100,31 @@ def test_normalizer(min_labels):
     normalizer = normalization.Normalizer(ensure_grayscale=True)
     ds = normalizer.transform_dataset(ds_img)
     example = next(iter(ds))
+    # print(f"shapes: {example['shape0']}, {example['shape1']}, {example['shape2']}")
+    # print(f"shapes: {example.get('shape0', '()')}, {example.get('shape1', '()')}, {example.get('shape2', '()')}")
     assert example["image"].shape[-1] == 1
 
     normalizer = normalization.Normalizer(ensure_float=True, ensure_grayscale=True)
     ds = normalizer.transform_dataset(ds_img)
     example = next(iter(ds))
+    # print(f"shapes: {example['shape0']}, {example['shape1']}, {example['shape2']}")
+    # print(f"shapes: {example.get('shape0', '()')}, {example.get('shape1', '()')}, {example.get('shape2', '()')}")
     assert example["image"].dtype == tf.float32
     assert example["image"].shape[-1] == 1
 
     normalizer = normalization.Normalizer(ensure_float=True, ensure_rgb=True)
     ds = normalizer.transform_dataset(ds_img)
     example = next(iter(ds))
+    # print(f"shapes: {example['shape0']}, {example['shape1']}, {example['shape2']}")
+    # print(f"shapes: {example.get('shape0', '()')}, {example.get('shape1', '()')}, {example.get('shape2', '()')}")
     assert example["image"].dtype == tf.float32
     assert example["image"].shape[-1] == 3
 
     normalizer = normalization.Normalizer(ensure_grayscale=True, ensure_rgb=True)
     ds = normalizer.transform_dataset(ds_img)
     example = next(iter(ds))
+    # print(f"shapes: {example['shape0']}, {example['shape1']}, {example['shape2']}")
+    # print(f"shapes: {example.get('shape0', '()')}, {example.get('shape1', '()')}, {example.get('shape2', '()')}")
     assert example["image"].shape[-1] == 1
 
 
