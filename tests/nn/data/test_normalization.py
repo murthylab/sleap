@@ -49,6 +49,15 @@ def test_ensure_grayscale():
         atol=1e-4,
     )
 
+    np.testing.assert_array_equal(
+        normalization.tf_ensure_grayscale(tf.ones([2, 2, 3], tf.uint8) * 255),
+        tf.ones([2, 2, 1], tf.uint8) * 255,
+    )
+    np.testing.assert_array_equal(
+        normalization.tf_ensure_grayscale(tf.ones([2, 2, 1], tf.uint8) * 255),
+        tf.ones([2, 2, 1], tf.uint8) * 255,
+    )
+
 
 def test_ensure_rgb():
     np.testing.assert_array_equal(
@@ -57,6 +66,15 @@ def test_ensure_rgb():
     )
     np.testing.assert_array_equal(
         normalization.ensure_rgb(tf.ones([2, 2, 1], tf.uint8) * 255),
+        tf.ones([2, 2, 3], tf.uint8) * 255,
+    )
+
+    np.testing.assert_array_equal(
+        normalization.tf_ensure_rgb(tf.ones([2, 2, 3], tf.uint8) * 255),
+        tf.ones([2, 2, 3], tf.uint8) * 255,
+    )
+    np.testing.assert_array_equal(
+        normalization.tf_ensure_rgb(tf.ones([2, 2, 1], tf.uint8) * 255),
         tf.ones([2, 2, 3], tf.uint8) * 255,
     )
 

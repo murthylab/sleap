@@ -387,7 +387,7 @@ def test_inference_layer():
 
 def test_inference_layer_preprocessing():
     # Grayscale -> RGB
-    ds = tf.data.Dataset.from_tensor_slices(tf.ones([2, 8, 8, 1], dtype=tf.uint8))
+    ds = tf.data.Dataset.from_tensor_slices(tf.ones([2, 1, 8, 8, 1], dtype=tf.uint8))
     example = next(iter(ds))
     assert example.shape[-1] == 1
 
@@ -410,7 +410,7 @@ def test_inference_layer_preprocessing():
 
 
     # RGB -> Grayscale
-    ds = tf.data.Dataset.from_tensor_slices(tf.ones([2, 8, 8, 3], dtype=tf.uint8))
+    ds = tf.data.Dataset.from_tensor_slices(tf.ones([2, 1, 8, 8, 3], dtype=tf.uint8))
     example = next(iter(ds))
     assert example.shape[-1] == 3
 
@@ -432,7 +432,7 @@ def test_inference_layer_preprocessing():
 
 
     # Grayscale -> Grayscale
-    ds = tf.data.Dataset.from_tensor_slices(tf.ones([2, 8, 8, 1], dtype=tf.uint8))
+    ds = tf.data.Dataset.from_tensor_slices(tf.ones([2, 1, 8, 8, 1], dtype=tf.uint8))
     example = next(iter(ds))
     assert example.shape[-1] == 1
 
@@ -454,7 +454,7 @@ def test_inference_layer_preprocessing():
 
 
     # RGB -> RGB
-    ds = tf.data.Dataset.from_tensor_slices(tf.ones([2, 8, 8, 3], dtype=tf.uint8))
+    ds = tf.data.Dataset.from_tensor_slices(tf.ones([2, 1, 8, 8, 3], dtype=tf.uint8))
     example = next(iter(ds))
     assert example.shape[-1] == 3
 

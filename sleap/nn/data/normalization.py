@@ -281,7 +281,8 @@ def tf_ensure_grayscale(image: tf.Tensor) -> tf.Tensor:
 
     See also: tf.image.rgb_to_grayscale
     """
-    if tf.shape(image)[-1] == 3:
+    # if tf.shape(image)[-1] == 3:
+    if image.shape[-1] == 3:
         image = tf.image.rgb_to_grayscale(image)
     return image
 
@@ -302,7 +303,8 @@ def tf_ensure_rgb(image: tf.Tensor) -> tf.Tensor:
 
     See also: tf.image.grayscale_to_rgb
     """
-    if tf.shape(image)[-1] == 1:
+    # if tf.shape(image)[-1] == 1:
+    if image.shape[-1] == 1:
         image = tf.image.grayscale_to_rgb(image)
     return image
 
