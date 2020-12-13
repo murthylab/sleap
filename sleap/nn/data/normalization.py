@@ -96,6 +96,7 @@ def ensure_grayscale(image: tf.Tensor) -> tf.Tensor:
         return image
 
 
+@tf.function
 def ensure_rgb(image: tf.Tensor) -> tf.Tensor:
     """Convert image to RGB if in grayscale format.
 
@@ -108,7 +109,7 @@ def ensure_rgb(image: tf.Tensor) -> tf.Tensor:
 
     See also: tf.image.grayscale_to_rgb
     """
-    if image.shape[-1] == 1:
+    if tf.shape(image)[-1] == 1:
         return tf.image.grayscale_to_rgb(image)
     else:
         return image
