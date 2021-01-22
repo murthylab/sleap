@@ -1271,6 +1271,9 @@ class BottomUpModelTrainer(Trainer):
 
 def main():
     """Create CLI for training and run."""
+
+    print ("This is a test commit hash")
+
     import argparse
 
     parser = argparse.ArgumentParser()
